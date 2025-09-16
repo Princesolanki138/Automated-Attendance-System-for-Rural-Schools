@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import LogoutButton from "../component/LogoutButton";
 import useUserDetails from "../hooks/useUserDetails";
 import logo from "../../public/trackAS.png";
-import Footer from "../component/Footer";
 
 const ClassDetails = () => {
   const { userDetails } = useUserDetails();
@@ -35,7 +34,6 @@ const ClassDetails = () => {
           </Link>
         </div>
       </div>
-      <Footer />
     </div>
   );
 };
