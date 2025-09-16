@@ -9,7 +9,6 @@ import useUserDetails from "../hooks/useUserDetails";
 import { QRCodeSVG } from "qrcode.react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
-import Footer from "../component/Footer";
 
 const VERCEL_URL = import.meta.env.VITE_VERCEL_URL;
 
@@ -228,7 +227,6 @@ const ClassSchedule = () => {
           />
         )}
       </div>
-      <Footer />
     </>
   );
 };
