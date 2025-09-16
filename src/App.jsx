@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { Analytics } from "@vercel/analytics/react";
 import RegisterLecturer from "./page/RegisterLecturer";
 import LoginLecturer from "./page/LoginLecturer";
 import ClassSchedule from "./page/ClassSchedule";
@@ -45,7 +46,12 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Analytics />
+    </>
+  );
 }
 
 export default App;
