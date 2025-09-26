@@ -140,7 +140,7 @@ const StudentLogin = () => {
           <img src={logo} alt="logo" />
         </div>
         <h2 className="text-[2.5rem] text-[#000D46] text-center font-bold mb-2">
-          TrackAS
+          ShikshaTrack
         </h2>
         {classDetails && (
           <div className="flex justify-between items-center">

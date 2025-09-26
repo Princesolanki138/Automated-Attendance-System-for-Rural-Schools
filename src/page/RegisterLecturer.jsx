@@ -5,7 +5,6 @@ import Logo from "/trackAS.png";
 import registerImg from "/registerImg.jpg";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import Footer from "../component/Footer";
 
 const RegisterLecturer = () => {
   const [fullName, setFullName] = useState("");
@@ -22,28 +21,26 @@ const RegisterLecturer = () => {
     setIsLoading(true);
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       setIsLoading(false);
       return;
     }
 
     if (!fullName || !email || !phoneNumber) {
-      alert("Please fill in all fields");
+      toast.error("Please fill in all fields");
       setIsLoading(false);
       return;
     }
 
     try {
-      // Sign up lecturer without email verification
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { error: authError } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (authError) throw authError;
 
-      // After successful signup, insert lecturer details into the 'lecturers' table
-      const { data: insertData, error: insertError } = await supabase
+      const { error: insertError } = await supabase
         .from("lecturers")
         .insert({
           fullName,
@@ -57,30 +54,29 @@ const RegisterLecturer = () => {
       navigate("/loginLecturer");
     } catch (error) {
       console.error("Registration error:", error);
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <section className="min-h-[100vh]">
-      <div className="grid md:grid-cols-2">
-        <form
-          onSubmit={handleRegister}
-          className="px-6 lg:px-[133px] overflow-scroll  h-[100vh]"
-        >
+    <section className="h-screen w-full grid md:grid-cols-2">
+      {/* LEFT: Registration Form */}
+      <div className="flex justify-center items-center bg-white">
+        <div className="w-full max-w-md shadow-xl rounded-xl p-8 border border-gray-100">
           <div className="flex flex-col items-center">
-            <img src={Logo} alt="logo" className="w-32 mt-8" />
-            <h2 className="text-[#000D46] font-bold text-2xl mt-1 mb-2">
+            <img src={Logo} alt="logo" className="w-24 mb-3" />
+            <h2 className="text-[#000D46] font-extrabold text-3xl mb-6">
               Create Account
             </h2>
           </div>
-          <div className="grid gap-y-4">
+
+          <form onSubmit={handleRegister} className="space-y-4">
             <Input
               type="text"
               label="Full Name"
-              placeholder="Enter your name"
+              placeholder="Enter your full name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
@@ -89,11 +85,12 @@ const RegisterLecturer = () => {
             <Input
               type="email"
               label="Email"
-              placeholder="Enter your email"
+              placeholder="Enter your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+
             <Input
               type="password"
               label="Password"
@@ -102,6 +99,7 @@ const RegisterLecturer = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+
             <Input
               type="password"
               label="Confirm Password"
@@ -110,6 +108,7 @@ const RegisterLecturer = () => {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
+
             <Input
               type="tel"
               label="Phone Number"
@@ -118,35 +117,37 @@ const RegisterLecturer = () => {
               onChange={(e) => setPhoneNumber(e.target.value)}
               required
             />
-          </div>
-          <button
-            type="submit"
-            className="btn bg-[#000D46] font-bold text-base text-white btn-block mt-4"
-            disabled={isLoading}
-          >
-            {isLoading ? "Creating Account..." : "Create Account"}
-          </button>
 
-          <p className="my-4 text-[#1E1E1E] text-center">
+            <button
+              type="submit"
+              className="btn bg-[#000D46] font-semibold text-base text-white btn-block py-3 rounded-lg hover:bg-[#001060] transition duration-300"
+              disabled={isLoading}
+            >
+              {isLoading ? "Creating Account..." : "Create Account"}
+            </button>
+          </form>
+
+          <p className="mt-4 text-center text-gray-700">
             Already have an account?{" "}
             <Link
-              className="text-[#000D46] font-semibold"
-              to={"/loginLecturer"}
+              to="/loginLecturer"
+              className="text-[#000D46] font-semibold hover:underline"
             >
               Login
             </Link>
           </p>
-        </form>
-
-        <div className="max-[100%] hidden md:block">
-          <img
-            src={registerImg}
-            alt="register hero image"
-            className="h-[100vh] w-full object-cover"
-          />
         </div>
       </div>
-      <Footer/>
+
+      {/* RIGHT: Image with Overlay */}
+      <div className="relative hidden md:block">
+        <img
+          src={registerImg}
+          alt="register background"
+          className="h-screen w-full object-cover opacity-70"
+        />
+        <div className="absolute inset-0 bg-black/20" />
+      </div>
     </section>
   );
 };

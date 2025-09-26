@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import AttendanceListModal from "../component/AttendanceListModal";
 import { Link } from "react-router-dom";
 import { BiArrowBack } from "react-icons/bi";
-import Footer from "../component/Footer";
 
 const PreviousClass = () => {
   const { userDetails } = useUserDetails();
@@ -16,10 +15,9 @@ const PreviousClass = () => {
 
   const lecturerId = userDetails?.lecturer_id;
 
-  // Function to fetch classes based on lecturer_id
+  // Fetch classes
   const fetchClasses = async () => {
     if (!lecturerId) return;
-
     setIsLoading(true);
 
     const { data, error } = await supabase
@@ -33,147 +31,106 @@ const PreviousClass = () => {
       setClasses(data);
     }
 
-    setIsLoading(false); // Ensure loading state is reset in both cases
+    setIsLoading(false);
   };
 
-  // Fetch classes when component mounts or lecturerId changes
   useEffect(() => {
     fetchClasses();
   }, [lecturerId]);
 
-  // Function to handle opening the attendance modal
   const handleViewAttendance = (classItem) => {
     setSelectedClass(classItem);
-    setIsModalOpen(true); // Open the modal
+    setIsModalOpen(true);
   };
 
-  // Close modals
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedClass(null); // Clear selected class
+    setSelectedClass(null);
   };
 
   return (
-    <>
-      <section className="pb-20 pt-8 px-6 max-w-7xl mx-auto h-[calc(100vh-6rem)]">
-        <div className="flex">
-          <Link to="/classDetails">
-            <button className="btn btn-sm rounded-full bg-blue-500 border-none text-white">
-              <span className="hidden xs:block">
-                <BiArrowBack />
-              </span>
-              Back
-            </button>
-          </Link>
+    <section className="min-h-screen bg-gray-50 py-10 px-4">
+      {/* Header */}
+      <div className="max-w-6xl mx-auto flex items-center mb-8">
+        <Link to="/classDetails">
+          <button className="flex items-center gap-1 bg-[#000D46] text-white px-4 py-2 rounded-full shadow-md hover:bg-[#001060] transition">
+            <BiArrowBack size={18} />
+            Back
+          </button>
+        </Link>
 
-          <h2 className="text-center mx-auto font-bold text-2xl mb-6 text-black">
-            List of Previous Classes
-          </h2>
-        </div>
+        <h2 className="text-center flex-1 text-2xl font-bold text-[#000D46]">
+          List of Previous Classes
+        </h2>
+      </div>
 
+      {/* Content */}
+      <div className="max-w-6xl mx-auto bg-white shadow-lg rounded-xl p-6">
         {isLoading ? (
-          <div className="flex justify-center text-black items-center h-32">
-            <div className="flex items-center justify-center">
-              <div className="loading loading-spinner bg-blue-500"></div>
+          <div className="flex justify-center items-center h-32">
+            <div className="loading loading-spinner text-[#000D46]" />
+          </div>
+        ) : classes.length > 0 ? (
+          <div className="overflow-x-auto">
+            {/* Table Header */}
+            <div className="grid grid-cols-6 text-center font-semibold text-[#000D46] border-b border-gray-200 pb-3 mb-4 text-sm md:text-base">
+              <span>S/N</span>
+              <span>Course Code</span>
+              <span>Course Title</span>
+              <span>Date</span>
+              <span>Time</span>
+              <span>Attendance</span>
+            </div>
+
+            {/* Class Rows */}
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              {classes.map((classItem, index) => {
+                const formattedDate = new Date(
+                  classItem.date
+                ).toLocaleDateString();
+
+                const formattedTime = new Date(
+                  classItem.time
+                ).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+
+                return (
+                  <div
+                    key={classItem.id}
+                    className="grid grid-cols-6 text-center items-center bg-gray-50 hover:bg-gray-100 rounded-lg shadow-sm px-3 py-2 transition"
+                  >
+                    <span className="text-gray-800">{index + 1}</span>
+                    <span className="text-gray-800">{classItem.course_code}</span>
+                    <span className="text-gray-800">{classItem.course_title}</span>
+                    <span className="text-gray-800">{formattedDate}</span>
+                    <span className="text-gray-800">{formattedTime}</span>
+                    <button
+                      onClick={() => handleViewAttendance(classItem)}
+                      className="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1 rounded-md shadow transition"
+                    >
+                      View List
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : (
-          <>
-            {classes.length > 0 ? (
-              <div className="max-h-[600px] overflow-y-auto">
-                <div className=" flex overflow-scroll gap-4  md:grid md:grid-cols-6 mb-6">
-                  <h2 className="font-bold text-black text-[0.7rem] md:text-base">
-                    S/N
-                  </h2>
-                  <h2 className="font-bold text-black text-[0.7rem] md:text-base">
-                    Course Code
-                  </h2>
-                  <h2 className="font-bold text-black text-[0.7rem] md:text-base">
-                    Course Title
-                  </h2>
-                  <h2 className="font-bold text-black text-[0.7rem] md:text-base">
-                    Date
-                  </h2>
-                  <h2 className="font-bold text-black text-[0.7rem] md:text-base">
-                    Time
-                  </h2>
-
-                  <h2 className="font-bold text-black text-[0.7rem] md:text-base">
-                    Attendance
-                  </h2>
-                </div>
-                {/* List of Classes */}
-                {classes.map((classItem, index) => {
-                  const formattedDate = new Date(
-                    classItem.date
-                  ).toLocaleDateString();
-                  const formattedTime = new Date(
-                    classItem.time
-                  ).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
-
-                  return (
-                    <div
-                      key={classItem.id}
-                      className="flex overflow-scroll mb-8 md:grid md:grid-cols-6 gap-4"
-                    >
-                      <div className="flex gap-4 md:flex-col">
-                        <div className="text-neutral-700 text-sm md:text-base">
-                          {index + 1}
-                        </div>
-                      </div>
-                      <div className="flex gap-4 md:flex-col">
-                        <div className="text-neutral-700 text-sm md:text-base">
-                          {classItem.course_code}
-                        </div>
-                      </div>
-                      <div className="flex gap-4 md:flex-col">
-                        <div className="text-neutral-700 text-sm md:text-base">
-                          {classItem.course_title}
-                        </div>
-                      </div>
-                      <div className="flex gap-4 md:flex-col">
-                        <div className="text-neutral-700 text-sm md:text-base">
-                          {formattedDate}
-                        </div>
-                      </div>
-                      <div className="flex gap-4 md:flex-col">
-                        <div className="text-neutral-700 text-sm md:text-base">
-                          {formattedTime}
-                        </div>
-                      </div>
-
-                      <div className="flex gap-4 md:flex-col">
-                        <button
-                          onClick={() => handleViewAttendance(classItem)} // Handle modal open
-                          className="btn capitalize btn-sm font-bold text-white bg-green-500 border-none"
-                        >
-                          View List
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-center text-black">
-                No previous classes found.
-              </p>
-            )}
-          </>
+          <p className="text-center text-gray-500 text-lg">
+            No previous classes found.
+          </p>
         )}
+      </div>
 
-        {/* Attendance Modal */}
-        <AttendanceListModal
-          isOpen={isModalOpen}
-          selectedClass={selectedClass}
-          onClose={handleCloseModal}
-        />
-      </section>
-      <Footer />
-    </>
+      {/* Attendance Modal */}
+      <AttendanceListModal
+        isOpen={isModalOpen}
+        selectedClass={selectedClass}
+        onClose={handleCloseModal}
+      />
+    </section>
   );
 };
 

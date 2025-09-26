@@ -10,7 +10,7 @@ import { QRCodeSVG } from "qrcode.react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 
-const VERCEL_URL = import.meta.env.VITE_VERCEL_URL;
+const VERCEL_URL = import.meta.env.VITE_VERCEL_URL || "http://localhost:5173";
 
 const ClassSchedule = () => {
   const { userDetails } = useUserDetails();
@@ -24,8 +24,7 @@ const ClassSchedule = () => {
     note: "",
   });
 
-  const [selectedLocationCordinate, setSelectedLocationCordinate] =
-    useState(null);
+  const [selectedLocationCordinate, setSelectedLocationCordinate] = useState(null);
   const [qrData, setQrData] = useState("");
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
@@ -49,34 +48,27 @@ const ClassSchedule = () => {
       locationGeography = `SRID=4326;POINT(${selectedLocationCordinate.lng} ${selectedLocationCordinate.lat})`;
     }
 
-    const { courseTitle, courseCode, lectureVenue, time, date, note } =
-      formData;
+    const { courseTitle, courseCode, lectureVenue, time, date, note } = formData;
 
     const registrationLink = `${VERCEL_URL}/studentLogin?courseCode=${encodeURIComponent(
       courseCode
     )}&time=${encodeURIComponent(time)}&lectureVenue=${encodeURIComponent(
       lectureVenue
-    )}&lat=${selectedLocationCordinate?.lat}&lng=${
-      selectedLocationCordinate?.lng
-    }`;
+    )}&lat=${selectedLocationCordinate?.lat}&lng=${selectedLocationCordinate?.lng}`;
 
-    // Generate QR code with registration link
     const qrCodeDataUrl = await new Promise((resolve) => {
       const svg = document.createElement("div");
       const qrCode = <QRCodeSVG value={registrationLink} size={256} />;
       import("react-dom/client").then((ReactDOM) => {
         ReactDOM.createRoot(svg).render(qrCode);
         setTimeout(() => {
-          const svgString = new XMLSerializer().serializeToString(
-            svg.querySelector("svg")
-          );
+          const svgString = new XMLSerializer().serializeToString(svg.querySelector("svg"));
           const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
           resolve(dataUrl);
         }, 0);
       });
     });
 
-    // Save the data to Supabase
     const { data, error } = await supabase
       .from("classes")
       .insert([
@@ -100,134 +92,120 @@ const ClassSchedule = () => {
     } else {
       toast.success("Class schedule created successfully");
 
-      // Extract and use the generated course_id
       const generatedCourseId = data[0]?.course_id;
       const updatedRegistrationLink = `${VERCEL_URL}/attendance?courseId=${encodeURIComponent(
         generatedCourseId
       )}&time=${encodeURIComponent(time)}&courseCode=${encodeURIComponent(
         courseCode
-      )}&lat=${selectedLocationCordinate?.lat}&lng=${
-        selectedLocationCordinate?.lng
-      }`;
+      )}&lat=${selectedLocationCordinate?.lat}&lng=${selectedLocationCordinate?.lng}`;
 
-      // Set the QR code data and open the QR modal
       setQrData(updatedRegistrationLink);
       setIsQRModalOpen(true);
     }
   };
 
   return (
-    <>
-      <div className="flex flex-col  md:flex-row max-h-[100vh]  bg-gray-100 ">
-        <div className="w-full md:w-1/2 p-4 md:p-4 flex flex-col justify-center relative">
-          <div>
+    <div className="flex flex-col md:flex-row max-h-[100vh] bg-gray-100">
+      {/* Left Form Card */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-4">
+        <div className="bg-white shadow-md rounded-xl p-6 w-full max-w-lg">
+          <div className="flex justify-between items-center mb-4">
             <Link to="/classDetails">
-              <button className="btn btn-sm rounded-full bg-blue-500 border-none text-white">
+              <button className="btn btn-sm bg-blue-500 text-white rounded-full">
                 Back
               </button>
             </Link>
+            <img src={logo} alt="logo" className="w-24" />
           </div>
 
-          <div className="w-full max-w-2xl h-[90vh] overflow-y-auto">
-            <div className="items-center flex self-center justify-center">
-              <img src={logo} alt="logo" />
-            </div>
-
-            <p className="text-sm text-neutral-600 text-center mb-1">
-              Schedule a class using the form below
-            </p>
-            <form onSubmit={handleSubmit} className="py-0">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <Input
+              label="Course Title"
+              name="courseTitle"
+              type="text"
+              onChange={handleInputChange}
+              value={formData.courseTitle}
+              required
+            />
+            <Input
+              label="Course Code"
+              name="courseCode"
+              type="text"
+              onChange={handleInputChange}
+              value={formData.courseCode}
+              required
+            />
+            <div className="relative">
               <Input
-                label="Course Title"
-                name="courseTitle"
+                label="Lecture Venue"
+                name="lectureVenue"
                 type="text"
-                onChange={handleInputChange}
-                value={formData.courseTitle}
-                required={true}
-              />
-              <Input
-                label="Course Code"
-                name="courseCode"
-                type="text"
-                onChange={handleInputChange}
-                value={formData.courseCode}
-                required={true}
-              />
-
-              <div className="relative">
-                <Input
-                  label="Lecture Venue"
-                  name="lectureVenue"
-                  type="text"
-                  placeholder="kindly select location"
-                  value={formData.lectureVenue}
-                  readOnly
-                  required={true}
-                />
-                <button
-                  type="button"
-                  onClick={() => setIsMapModalOpen(true)}
-                  className="btn absolute right-0 top-9 px-3 bg-green-500 text-white rounded-r-md hover:bg-green-600 transition-colors"
-                >
-                  Select Location
-                </button>
-              </div>
-              <Input
-                name="time"
-                type="time"
-                label="Time"
-                onChange={handleInputChange}
-                value={formData.time}
-                required={true}
-              />
-              <Input
-                name="date"
-                type="date"
-                label="Date"
-                onChange={handleInputChange}
-                value={formData.date}
-                required={true}
-              />
-              <Input
-                label="Note"
-                name="note"
-                type="text"
-                onChange={handleInputChange}
-                value={formData.note}
+                placeholder="Select location"
+                value={formData.lectureVenue}
+                readOnly
+                required
               />
               <button
-                type="submit"
-                className="w-full btn bg-blue-500 text-white hover:bg-blue-600 transition-colors mt-4"
+                type="button"
+                onClick={() => setIsMapModalOpen(true)}
+                className="btn absolute right-0 top-9 px-3 bg-green-500 text-white rounded-r-md"
               >
-                Generate QR Code
+                Select
               </button>
-            </form>
-          </div>
+            </div>
+            <Input
+              name="time"
+              type="time"
+              label="Time"
+              onChange={handleInputChange}
+              value={formData.time}
+              required
+            />
+            <Input
+              name="date"
+              type="date"
+              label="Date"
+              onChange={handleInputChange}
+              value={formData.date}
+              required
+            />
+            <Input
+              label="Note"
+              name="note"
+              type="text"
+              onChange={handleInputChange}
+              value={formData.note}
+            />
+            <button type="submit" className="w-full btn bg-blue-500 text-white">
+              Generate QR Code
+            </button>
+          </form>
         </div>
-
-        <div className="hidden md:flex w-1/2 h-screen items-center justify-center overflow-hidden">
-          <img
-            src={scheduleImg}
-            alt="Student"
-            className="object-cover w-full h-full max-w-none"
-          />
-        </div>
-
-        {isMapModalOpen && (
-          <MapModal
-            onClose={() => setIsMapModalOpen(false)}
-            onSelectLocation={handleLocationChange}
-          />
-        )}
-
-        {isQRModalOpen && (
-          <QRCodeModal
-            qrData={qrData}
-            onClose={() => setIsQRModalOpen(false)}
-          />
-        )}
       </div>
-    </>
+
+      {/* Right Image */}
+      <div className="hidden md:flex w-1/2 h-screen overflow-hidden">
+        <img
+          src={`https://images.hindustantimes.com/rf/image_size_630x354/HT/p2/2019/10/03/Pictures/empty-classroom-seen-in-srinagar_63e42d3e-e607-11e9-939f-ba4a7f73df5c.jpg`}
+          alt="Student"
+          className="object-cover w-full h-full opacity-30"
+        />
+      </div>
+
+      {isMapModalOpen && (
+        <MapModal
+          onClose={() => setIsMapModalOpen(false)}
+          onSelectLocation={handleLocationChange}
+        />
+      )}
+
+      {isQRModalOpen && (
+        <QRCodeModal
+          qrData={qrData}
+          onClose={() => setIsQRModalOpen(false)}
+        />
+      )}
+    </div>
   );
 };
 
