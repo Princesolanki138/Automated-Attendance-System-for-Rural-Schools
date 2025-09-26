@@ -116,7 +116,7 @@ const AttendanceListModal = ({ isOpen, selectedClass, onClose }) => {
                       Name: {attendee.name}
                     </p>
                     <p className="text-black uppercase text-sm font-semibold">
-                      Matric No: {attendee.matric_no}
+                      Roll No: {attendee.matric_no}
                     </p>
                     <p className="text-gray-800 text-sm">
                       Attended At: {formattedTimestamp}

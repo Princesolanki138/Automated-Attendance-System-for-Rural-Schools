@@ -188,7 +188,7 @@ const ClassSchedule = () => {
         <img
           src={`https://images.hindustantimes.com/rf/image_size_630x354/HT/p2/2019/10/03/Pictures/empty-classroom-seen-in-srinagar_63e42d3e-e607-11e9-939f-ba4a7f73df5c.jpg`}
           alt="Student"
-          className="object-cover w-full h-full opacity-30"
+          className="object-cover w-full h-full opacity-60"
         />
       </div>
 

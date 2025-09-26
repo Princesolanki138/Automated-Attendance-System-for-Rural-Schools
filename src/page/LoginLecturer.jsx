@@ -54,7 +54,7 @@ const LoginLecturer = () => {
               Welcome Back!
             </h2>
             <p className="text-sm text-neutral-700 mt-1">
-              Sign in to continue to TrackAS
+              Sign in to continue to ShikshaTrack
             </p>
           </div>
 

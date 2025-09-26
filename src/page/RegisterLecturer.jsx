@@ -140,11 +140,11 @@ const RegisterLecturer = () => {
       </div>
 
       {/* RIGHT: Image with Overlay */}
-      <div className="relative hidden md:block">
+      <div className="relative hidden md:block h-screen">
         <img
           src={registerImg}
           alt="register background"
-          className="h-screen w-full object-cover opacity-70"
+          className="h-full w-full object-cover opacity-70"
         />
         <div className="absolute inset-0 bg-black/20" />
       </div>

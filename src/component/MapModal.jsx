@@ -21,75 +21,64 @@ const MapModal = ({ onClose, onSelectLocation }) => {
   const [loading, setLoading] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [locationName, setLocationName] = useState("");
-  const markerRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
+  const markerRef = useRef(null);
+  const mapRef = useRef(null); // store map instance
+
+  // Reverse Geocoding
   const reverseGeocode = async (lat, lng) => {
-    setLoading(true);
     try {
-      const response = await axios.get(
-        `https://nominatim.openstreetmap.org/reverse`,
-        {
-          params: {
-            format: "json",
-            lat: lat,
-            lon: lng,
-          },
-        }
-      );
+      const response = await axios.get(`https://nominatim.openstreetmap.org/reverse`, {
+        params: {
+          format: "json",
+          lat,
+          lon: lng,
+        },
+      });
       return response.data.display_name;
     } catch (error) {
       console.error("Reverse geocoding failed:", error);
       return "Unknown location";
-    } finally {
-      setLoading(false);
     }
   };
 
+  // Map Events
   const MapEvents = () => {
     const map = useMap();
 
     useEffect(() => {
-      if (!map) return;
+      mapRef.current = map;
 
       const handleClick = async (e) => {
         const { lat, lng } = e.latlng;
-        setSelectedPosition({ lat, lng });
         const name = await reverseGeocode(lat, lng);
+        setSelectedPosition({ lat, lng });
         setLocationName(name);
         onSelectLocation(name, { lat, lng });
 
-        // Remove existing marker if any
-        if (markerRef.current) {
-          markerRef.current.remove();
-        }
+        // Remove old marker
+        if (markerRef.current) markerRef.current.remove();
 
-        // Create a new marker with a permanent popup
+        // Add new marker
         const marker = L.marker([lat, lng]).addTo(map);
-        marker
-          .bindPopup(`<div><p>${name}</p></div>`, { autoClose: false, closeOnClick: false })
-          .openPopup();
+        marker.bindPopup(`<div><p>${name}</p></div>`).openPopup();
 
-        // Store the marker reference
         markerRef.current = marker;
-
-        // Center the map on the new marker
-        map.setView([lat, lng], map.getZoom());
+        map.setView([lat, lng], 18);
       };
 
       map.on("click", handleClick);
-
-      return () => {
-        map.off("click", handleClick);
-      };
+      return () => map.off("click", handleClick);
     }, [map]);
 
     return null;
   };
 
-  // --- New: Use Current Location ---
+  // Use Current Location
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by this browser.");
+      toast.error("Geolocation not supported by this browser.");
       return;
     }
 
@@ -98,22 +87,19 @@ const MapModal = ({ onClose, onSelectLocation }) => {
       async (position) => {
         const { latitude: lat, longitude: lng } = position.coords;
         const name = await reverseGeocode(lat, lng);
+
         setSelectedPosition({ lat, lng });
         setLocationName(name);
         onSelectLocation(name, { lat, lng });
 
-        // Remove existing marker if any
-        if (markerRef.current) {
-          markerRef.current.remove();
-        }
+        // Remove old marker
+        if (markerRef.current) markerRef.current.remove();
 
-        // Add marker on map
-        const map = markerRef.current?._map || null;
+        const map = mapRef.current;
         if (map) {
           const marker = L.marker([lat, lng]).addTo(map);
-          marker
-            .bindPopup(`<div><p>${name}</p></div>`, { autoClose: false, closeOnClick: false })
-            .openPopup();
+          marker.bindPopup(`<div><p>${name}</p></div>`).openPopup();
+
           markerRef.current = marker;
           map.setView([lat, lng], 18);
         }
@@ -128,10 +114,58 @@ const MapModal = ({ onClose, onSelectLocation }) => {
     );
   };
 
+  // 🔎 Search Location
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    setLoading(true);
+    try {
+      const response = await axios.get(`https://nominatim.openstreetmap.org/search`, {
+        params: {
+          format: "json",
+          q: searchQuery,
+        },
+      });
+
+      if (response.data.length === 0) {
+        toast.error("No results found.");
+        setLoading(false);
+        return;
+      }
+
+      const { lat, lon, display_name } = response.data[0];
+
+      setSelectedPosition({ lat: parseFloat(lat), lng: parseFloat(lon) });
+      setLocationName(display_name);
+      onSelectLocation(display_name, { lat: parseFloat(lat), lng: parseFloat(lon) });
+
+      // Remove old marker
+      if (markerRef.current) markerRef.current.remove();
+
+      const map = mapRef.current;
+      if (map) {
+        const marker = L.marker([lat, lon]).addTo(map);
+        marker.bindPopup(`<div><p>${display_name}</p></div>`).openPopup();
+
+        markerRef.current = marker;
+        map.setView([lat, lon], 18);
+      }
+
+      toast.success("Location found!");
+    } catch (error) {
+      toast.error("Error searching location.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleConfirm = () => {
     if (selectedPosition) {
       onSelectLocation(locationName, selectedPosition);
       onClose();
+    } else {
+      toast.error("Please select a location.");
     }
   };
 
@@ -142,17 +176,33 @@ const MapModal = ({ onClose, onSelectLocation }) => {
           Select Location
         </h2>
 
-        {/* --- Button for Current Location --- */}
-        <div className="flex justify-end mb-2">
+        {/* 🔎 Search and Current Location */}
+        <div className="flex gap-2 mb-2">
+          <input
+            type="text"
+            placeholder="Search for a place..."
+            className="border border-gray-300 px-3 py-1 rounded flex-1"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
           <button
-            className="btn bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition-colors"
-            onClick={handleUseCurrentLocation}
+            onClick={handleSearch}
+            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
             disabled={loading}
           >
-            Use Current Location
+            Search
+          </button>
+          <button
+            onClick={handleUseCurrentLocation}
+            className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+            disabled={loading}
+          >
+            Current
           </button>
         </div>
 
+        {/* Map */}
         <MapContainer
           center={[7.3056, 5.1357]}
           zoom={18}
@@ -162,17 +212,18 @@ const MapModal = ({ onClose, onSelectLocation }) => {
           <MapEvents />
         </MapContainer>
 
+        {/* Buttons */}
         <div className="mt-4 flex justify-between">
           <button
             onClick={onClose}
-            className="btn bg-red-500 text-white px-4 py-2 rounded"
+            className="bg-red-500 text-white px-4 py-2 rounded"
             disabled={loading}
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
-            className="btn bg-green-500 text-white px-4 py-2 rounded"
+            className="bg-green-500 text-white px-4 py-2 rounded"
             disabled={loading || !selectedPosition}
           >
             {loading ? "Loading..." : "Confirm Location"}

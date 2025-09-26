@@ -190,8 +190,8 @@ const StudentLogin = () => {
           <Input
             type="text"
             name="matricNumber"
-            label="Matriculation Number"
-            placeholder={"Your matriculation number"}
+            label="Roll Number"
+            placeholder={"Your Roll number"}
             value={matricNumber}
             onChange={(e) => setMatricNumber(e.target.value)}
           />
