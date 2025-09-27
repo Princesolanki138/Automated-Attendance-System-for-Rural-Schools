@@ -56,7 +56,7 @@ const StudentLogin = () => {
             setUserDistance(distance);
 
             // Check if the distance is within 20 meters
-            setIsWithinRange(distance <= 20);
+            setIsWithinRange(distance <= 50);
           },
           (error) => {
             toast.error(`Error getting user location., ${error.message}`);
